@@ -1,9 +1,7 @@
 import torchvision
-from torchvision import transforms
-import torchvision.transforms.functional as F
 import numbers
-from PIL import Image
 import random
+import numpy as np
 
 
 class BrightnessJitter(object):  # 0.5 to 5 is a good range

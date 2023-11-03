@@ -27,6 +27,7 @@ class BldgDataset(Dataset):
         seq_len=5,
         num_seq=6,
         num_frame=30,
+        seed=42,
     ):
         super(BldgDataset, self).__init__()
 
@@ -43,6 +44,7 @@ class BldgDataset(Dataset):
         self.mean = 0.0
         self.std = 0.0
         self.load_dataset()
+        self.split_data(seed)
 
     def load_dataset(self):
         sum_pixels = np.float64(0)
@@ -151,6 +153,17 @@ class BldgDataset(Dataset):
             "route": item["route"],
             "bldg": item["bldg"],
         }
+
+    def split_data(self, seed):
+        # Split the data into training and validation sets
+        np.random.seed(seed)
+        np.random.shuffle(self.data)  # Shuffle the data
+
+        split_index = int(len(self.data) * 0.8)
+        if self.mode == "train":
+            self.data = self.data[:split_index]
+        elif self.mode == "val":
+            self.data = self.data[split_index:]
 
     def __len__(self):
         return len(self.data)

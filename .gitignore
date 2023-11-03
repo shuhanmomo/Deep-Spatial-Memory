@@ -1,6 +1,7 @@
 *.3dm
 *.3dmbak
 *.pdf
+*.pyc
 
 # data
 data/temp/
@@ -9,4 +10,7 @@ temp/
 
 # reading
 reading/
+
+# logging
+log_tmp/
 
