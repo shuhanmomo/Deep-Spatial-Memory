@@ -3,5 +3,6 @@
 *.pdf
 
 # data
-data/
+data/temp/
+temp/
 
