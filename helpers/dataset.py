@@ -40,9 +40,14 @@ class BldgDataset(Dataset):
 
         # Load dataset
         self.data = []
+        self.mean = 0.0
+        self.std = 0.0
         self.load_dataset()
 
     def load_dataset(self):
+        sum_pixels = np.float64(0)
+        sum_pixels_squared = np.float64(0)
+        pixel_count = np.float64(0)
         # Extract the main zip file if needed
         with zipfile.ZipFile(self.data_path, "r") as main_zip:
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -84,8 +89,14 @@ class BldgDataset(Dataset):
                                         path_folder_full, img_filename
                                     )
                                     if os.path.exists(img_path):
-                                        img_array = read_image(img_path)
+                                        img_array = read_image(img_path).astype(
+                                            np.float64
+                                        )
                                         path_images.append(img_array)
+                                        # Update the sums for mean and std calculation
+                                        sum_pixels += img_array.sum()
+                                        sum_pixels_squared += (img_array**2).sum()
+                                        pixel_count += img_array.size
 
                                 # Only consider complete sequences with 30 frames
                                 if len(path_images) != self.num_frame:
@@ -106,20 +117,27 @@ class BldgDataset(Dataset):
                                             "bldg": bldg,
                                         }
                                     )
+        self.mean = sum_pixels / pixel_count
+        variance = (sum_pixels_squared / pixel_count) - (self.mean**2)
+        if variance < 0:
+            if np.isclose(variance, 0):
+                self.std = 0
+            else:
+                raise ValueError(f"Calculated negative variance: {variance}")
+        else:
+            self.std = np.sqrt(variance)
 
     def __getitem__(self, index):
         item = self.data[index]
         imgs = item["images"]
-
+        t_imgs = imgs.reshape(-1, 1, 30, 60)  # num_frame, C, H, W
         # Apply transform if provided
         if self.transform:
-            t_imgs = self.transform(imgs)
-
-        # Convert images to PyTorch tensor
-        else:
-            t_imgs = torch.from_numpy(imgs).float()
-
-        t_imgs = t_imgs.unsqueeze(1)  # num_frame, C,H,W
+            t_imgs = self.transform(t_imgs)
+        t_imgs = np.stack(t_imgs, axis=0)
+        t_imgs = torch.from_numpy(t_imgs).float()
+        # normalize
+        t_imgs = (t_imgs - self.mean) / self.std
         (C, H, W) = t_imgs[0].size()
         t_imgs = t_imgs.view(self.num_seq, self.seq_len, C, H, W).transpose(
             1, 2
