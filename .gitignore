@@ -4,5 +4,9 @@
 
 # data
 data/temp/
+data/experiments/
 temp/
+
+# reading
+reading/
 
