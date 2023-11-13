@@ -2,13 +2,18 @@
 *.3dmbak
 *.pdf
 *.pyc
+*.png
+*.docx
+*.zip
 
 # data
 data/temp/
 temp/
+DemoExperiment/
 
-# reading
+# resaerch
 reading/
+papervisuals/
 
 # logging
 log_tmp/

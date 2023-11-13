@@ -14,9 +14,8 @@ def format_name(zip_file_name):
     """
     reads zip file name and format it into lower case
     """
-    formatted_name = zip_file_name.replace(".zip", "").replace("_", " ").lower()
+    formatted_name = zip_file_name.lower().replace(".zip", "").split("_")
     return formatted_name
-
 
 class BldgDataset(Dataset):
     def __init__(
@@ -61,14 +60,16 @@ class BldgDataset(Dataset):
                     route = bldg_route_label[
                         -1
                     ]  # The last character is the route label a,b,c,d
-                    bldg = bldg_route_label[:-2]
+                    bldg = bldg_route_label[0]
+                    sequence_type = " ".join(bldg_route_label[1:-1])
                     if bldg not in self.building_names:
                         self.building_names.append(bldg)
 
                     # Extract the building sequence label zip file
+                    
                     bldg_zip_path = os.path.join(temp_dir, bldg_zip_name)
                     with zipfile.ZipFile(bldg_zip_path, "r") as bldg_zip:
-                        bldg_temp_dir = os.path.join(temp_dir, bldg_route_label)
+                        bldg_temp_dir = os.path.join(temp_dir, " ".join(bldg_route_label))
                         bldg_zip.extractall(bldg_temp_dir)
 
                         # Iterate over path folders
@@ -103,7 +104,7 @@ class BldgDataset(Dataset):
                                 # Only consider complete sequences with 30 frames
                                 if len(path_images) != self.num_frame:
                                     print(
-                                        f"Error: {bldg}, Route {route}, Path {path_folder} does not have 30 images."
+                                        f"Error: {bldg}, Route {route}, Type{sequence_type},Path {path_folder} does not have 30 images."
                                     )
                                     return
                                 else:
@@ -117,6 +118,7 @@ class BldgDataset(Dataset):
                                             ),
                                             "route": route,
                                             "bldg": bldg,
+                                            "type":sequence_type
                                         }
                                     )
         self.mean = sum_pixels / pixel_count
@@ -152,6 +154,7 @@ class BldgDataset(Dataset):
             "path": item["path"],
             "route": item["route"],
             "bldg": item["bldg"],
+            "type":item["type"]
         }
 
     def split_data(self, seed):
@@ -164,11 +167,13 @@ class BldgDataset(Dataset):
             self.data = self.data[:split_index]
         elif self.mode == "val":
             self.data = self.data[split_index:]
+        elif self.mode == "predict":
+            self.data = self.data [::]
 
     def __len__(self):
         return len(self.data)
 
-    def find_indices(self, bldg_name, route, path_number):
+    def find_indices(self, bldg_name, sequence_type,route, path_number):
         """
         Finds the indices of the data items that match the given building, route, and path number.
 
@@ -183,6 +188,7 @@ class BldgDataset(Dataset):
                 item["bldg"].lower() == bldg_name.lower()
                 and item["route"].lower() == route.lower()
                 and item["path"] == path_number
+                and item["type"] == sequence_type
             ):
                 indices.append(idx)
         return indices
@@ -193,9 +199,10 @@ class BldgDataset(Dataset):
         imgs = self[idx]["imgs"]
         bldg = self[idx]["bldg"]
         route = self[idx]["route"]
+        sequence_type = self[idx]["type"]
         for img in imgs:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
-            ax.set_title(f"{bldg} route {route} path {path}")
+            ax.set_title(f"{bldg} {sequence_type}_route {route}_path {path}")
             plt.imshow(img.reshape(30, 60), cmap="gray", vmin=0, vmax=255)
             plt.show()
