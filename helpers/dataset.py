@@ -6,7 +6,7 @@ import zipfile
 import tempfile
 import re
 from tqdm import tqdm
-from utils import read_image
+from helpers.utils import read_image
 import matplotlib.pyplot as plt
 
 
