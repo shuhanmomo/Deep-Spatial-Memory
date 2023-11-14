@@ -41,7 +41,9 @@ class BrightnessJitter(object):  # 0.5 to 5 is a good range
 
         if brightness is not None:
             brightness_factor = random.uniform(brightness[0], brightness[1])
-            transforms.append(lambda img: img * brightness_factor)
+            transforms.append(lambda img: np.where(
+                img == 255, img, np.clip(img * brightness_factor, 0, 255)
+            ))
 
         transform = torchvision.transforms.Compose(transforms)
 
