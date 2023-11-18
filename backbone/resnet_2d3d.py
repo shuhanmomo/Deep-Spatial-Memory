@@ -10,6 +10,7 @@ __all__ = [
     "resnet18_2d3d_full",
     "resnet34_2d3d_full",
     "resnet50_2d3d_full",
+    "resnet18_2d3d_simplified",
 ]
 
 

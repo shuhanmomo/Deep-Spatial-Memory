@@ -18,6 +18,7 @@ class MemDPC_BD(nn.Module):
         pred_step=3,
         network="resnet18",
         mem_size=1024,
+        drop_out=0.5,
     ):
         super(MemDPC_BD, self).__init__()
         print(
@@ -57,12 +58,14 @@ class MemDPC_BD(nn.Module):
             hidden_size=self.param["hidden_size"],
             kernel_size=1,
             num_layers=self.param["num_layers"],
+            dropout=drop_out,  # try drop out
         )
         self.agg_b = ConvGRU(
             input_size=self.param["feature_size"],
             hidden_size=self.param["hidden_size"],
             kernel_size=1,
             num_layers=self.param["num_layers"],
+            dropout=drop_out,  # try drop out
         )
 
         self.network_pred = nn.Sequential(
@@ -73,6 +76,7 @@ class MemDPC_BD(nn.Module):
                 padding=0,
             ),
             nn.ReLU(inplace=True),
+            nn.Dropout(p=drop_out),  # trying drop out
             nn.Conv2d(
                 self.param["feature_size"],
                 self.param["membanks_size"],

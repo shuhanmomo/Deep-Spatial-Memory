@@ -129,29 +129,25 @@ class RandomHorizontalFlip:  # choose consistent to be false
 
 class Scale:
     def __init__(self, size, interpolation=Image.NEAREST):
-        assert isinstance(size, int) or (
-            isinstance(size, collections.Iterable) and len(size) == 2
-        )
+        assert isinstance(size, int) or len(size) == 2
         self.size = size
         self.interpolation = interpolation
 
     def __call__(self, imgmap):
-        # assert len(imgmap) > 1 # list of images
-        img1 = imgmap[0]
-        if isinstance(self.size, int):
-            w, h = img1.size
-            if (w <= h and w == self.size) or (h <= w and h == self.size):
-                return imgmap
-            if w < h:
-                ow = self.size
-                oh = int(self.size * h / w)
-                return [i.resize((ow, oh), self.interpolation) for i in imgmap]
-            else:
-                oh = self.size
-                ow = int(self.size * w / h)
-                return [i.resize((ow, oh), self.interpolation) for i in imgmap]
-        else:
-            return [i.resize(self.size, self.interpolation) for i in imgmap]
+        num_frames, C, H, W = imgmap.shape
+        resized_images = []
+        for i in range(num_frames):
+            img = imgmap[i, 0, :, :]  # Assuming single-channel images
+            # ... resizing logic for img ...
+            resized_img = cv2.resize(
+                img, (self.size[1], self.size[0]), interpolation=self.interpolation
+            )
+            resized_img = np.expand_dims(
+                resized_img, axis=0
+            )  # Restore channel dimension
+            resized_images.append(resized_img)
+
+        return np.array(resized_images)
 
 
 class RandomCropWithProb:
@@ -164,63 +160,39 @@ class RandomCropWithProb:
         self.threshold = p
 
     def __call__(self, imgmap):
-        img1 = imgmap[0]
-        h, w = img1.shape
+        num_frames, C, h, w = imgmap.shape
         if self.size is not None:
             th, tw = self.size
             if w == tw and h == th:
                 return imgmap
-            if self.consistent:
-                if random.random() < self.threshold:
-                    x1 = random.randint(0, w - tw)
-                    y1 = random.randint(0, h - th)
+            cropped_images = []
+            for i in range(num_frames):
+                img = imgmap[i, 0, :, :]
+                if self.consistent:
+                    if random.random() < self.threshold:
+                        print(w - tw)
+                        x1 = random.randint(0, w - tw)
+                        y1 = random.randint(0, h - th)
+                    else:
+                        x1 = int(round((w - tw) / 2.0))
+                        y1 = int(round((h - th) / 2.0))
+                    cropped_img = img[y1 : y1 + th, x1 : x1 + tw]
+                    cropped_img = np.expand_dims(
+                        cropped_img, axis=0
+                    )  # Restore channel dimension
+                    cropped_images.append(cropped_img)
                 else:
-                    x1 = int(round((w - tw) / 2.0))
-                    y1 = int(round((h - th) / 2.0))
-                return [i[y1 : y1 + th, x1 : x1 + tw] for i in imgmap]
-            else:
-                result = []
-                for i in imgmap:
                     if random.random() < self.threshold:
                         x1 = random.randint(0, w - tw)
                         y1 = random.randint(0, h - th)
                     else:
                         x1 = int(round((w - tw) / 2.0))
                         y1 = int(round((h - th) / 2.0))
-                    result.append(i[y1 : y1 + th, x1 : x1 + tw])
-                return result
+                    cropped_img = img[y1 : y1 + th, x1 : x1 + tw]
+                    cropped_img = np.expand_dims(
+                        cropped_img, axis=0
+                    )  # Restore channel dimension
+                    cropped_images.append(cropped_img)
+            return np.array(cropped_images)
         else:
             return imgmap
-
-
-class Scale:
-    def __init__(self, size, interpolation=cv2.INTER_NEAREST):
-        assert isinstance(size, int) or (
-            isinstance(size, collections.Iterable) and len(size) == 2
-        )
-        self.size = size
-        self.interpolation = interpolation
-
-    def __call__(self, imgmap):
-        resized_images = []
-        for img in imgmap:
-            h, w = img.shape[:2]
-            if isinstance(self.size, int):
-                if (w <= h and w == self.size) or (h <= w and h == self.size):
-                    resized_images.append(img)
-                    continue
-                if w < h:
-                    ow = self.size
-                    oh = int(self.size * h / w)
-                else:
-                    oh = self.size
-                    ow = int(self.size * w / h)
-                resized_img = cv2.resize(
-                    img, (ow, oh), interpolation=self.interpolation
-                )
-            else:
-                resized_img = cv2.resize(
-                    img, (self.size[1], self.size[0]), interpolation=self.interpolation
-                )
-            resized_images.append(resized_img)
-        return resized_images
