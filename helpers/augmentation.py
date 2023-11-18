@@ -2,6 +2,9 @@ import torchvision
 import numbers
 import random
 import numpy as np
+import collections
+import cv2
+from PIL import Image
 
 
 class BrightnessJitter(object):  # 0.5 to 5 is a good range
@@ -41,9 +44,11 @@ class BrightnessJitter(object):  # 0.5 to 5 is a good range
 
         if brightness is not None:
             brightness_factor = random.uniform(brightness[0], brightness[1])
-            transforms.append(lambda img: np.where(
-                img == 255, img, np.clip(img * brightness_factor, 0, 255)
-            ))
+            transforms.append(
+                lambda img: np.where(
+                    img == 255, img, np.clip(img * brightness_factor, 0, 255)
+                )
+            )
 
         transform = torchvision.transforms.Compose(transforms)
 
@@ -120,3 +125,102 @@ class RandomHorizontalFlip:  # choose consistent to be false
                     result.append(i)
             assert len(result) == len(imgmap)
             return result
+
+
+class Scale:
+    def __init__(self, size, interpolation=Image.NEAREST):
+        assert isinstance(size, int) or (
+            isinstance(size, collections.Iterable) and len(size) == 2
+        )
+        self.size = size
+        self.interpolation = interpolation
+
+    def __call__(self, imgmap):
+        # assert len(imgmap) > 1 # list of images
+        img1 = imgmap[0]
+        if isinstance(self.size, int):
+            w, h = img1.size
+            if (w <= h and w == self.size) or (h <= w and h == self.size):
+                return imgmap
+            if w < h:
+                ow = self.size
+                oh = int(self.size * h / w)
+                return [i.resize((ow, oh), self.interpolation) for i in imgmap]
+            else:
+                oh = self.size
+                ow = int(self.size * w / h)
+                return [i.resize((ow, oh), self.interpolation) for i in imgmap]
+        else:
+            return [i.resize(self.size, self.interpolation) for i in imgmap]
+
+
+class RandomCropWithProb:
+    def __init__(self, size, p=0.8, consistent=True):
+        if isinstance(size, numbers.Number):
+            self.size = (int(size), int(size))
+        else:
+            self.size = (size[0], size[1])
+        self.consistent = consistent
+        self.threshold = p
+
+    def __call__(self, imgmap):
+        img1 = imgmap[0]
+        h, w = img1.shape
+        if self.size is not None:
+            th, tw = self.size
+            if w == tw and h == th:
+                return imgmap
+            if self.consistent:
+                if random.random() < self.threshold:
+                    x1 = random.randint(0, w - tw)
+                    y1 = random.randint(0, h - th)
+                else:
+                    x1 = int(round((w - tw) / 2.0))
+                    y1 = int(round((h - th) / 2.0))
+                return [i[y1 : y1 + th, x1 : x1 + tw] for i in imgmap]
+            else:
+                result = []
+                for i in imgmap:
+                    if random.random() < self.threshold:
+                        x1 = random.randint(0, w - tw)
+                        y1 = random.randint(0, h - th)
+                    else:
+                        x1 = int(round((w - tw) / 2.0))
+                        y1 = int(round((h - th) / 2.0))
+                    result.append(i[y1 : y1 + th, x1 : x1 + tw])
+                return result
+        else:
+            return imgmap
+
+
+class Scale:
+    def __init__(self, size, interpolation=cv2.INTER_NEAREST):
+        assert isinstance(size, int) or (
+            isinstance(size, collections.Iterable) and len(size) == 2
+        )
+        self.size = size
+        self.interpolation = interpolation
+
+    def __call__(self, imgmap):
+        resized_images = []
+        for img in imgmap:
+            h, w = img.shape[:2]
+            if isinstance(self.size, int):
+                if (w <= h and w == self.size) or (h <= w and h == self.size):
+                    resized_images.append(img)
+                    continue
+                if w < h:
+                    ow = self.size
+                    oh = int(self.size * h / w)
+                else:
+                    oh = self.size
+                    ow = int(self.size * w / h)
+                resized_img = cv2.resize(
+                    img, (ow, oh), interpolation=self.interpolation
+                )
+            else:
+                resized_img = cv2.resize(
+                    img, (self.size[1], self.size[0]), interpolation=self.interpolation
+                )
+            resized_images.append(resized_img)
+        return resized_images
