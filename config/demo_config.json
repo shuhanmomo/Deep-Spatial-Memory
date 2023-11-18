@@ -1,0 +1,36 @@
+{
+    "net": "resnet18_simplified",
+    "model": "memdpc",
+    "dataset": "BldgDataset",
+    "seq_len": 5,
+    "num_seq": 6,
+    "pred_step": 3,
+    "ds": 3,
+    "mem_size": 128,
+    "batch_size": 8,
+    "lr": 5e-4,
+    "wd": 1e-4,
+    "resume": "",
+    "pretrain": "",
+    "epochs": 100,
+    "start_epoch": 0,
+    "gpu": "0,1",
+    "print_freq": 5,
+    "reset_lr": false,
+    "prefix": "tmp",
+    "img_dim": [
+        30,
+        60
+    ],
+    "seed": 0,
+    "workers": 2,
+    "p": 0.65,
+    "data_path": "casestudy.zip",
+    "drop_out": 0.3,
+    "type_to_label": {
+        "room": 0,
+        "passage": 1,
+        "exterior": 2
+    },
+    "label_num": 6
+}

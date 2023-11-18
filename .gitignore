@@ -5,8 +5,8 @@
 *.png
 *.docx
 *.zip
-*.json
 *.gh
+
 # data
 data/temp/
 temp/

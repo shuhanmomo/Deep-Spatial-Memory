@@ -1,0 +1,29 @@
+{
+    "net": "resnet18",
+    "model": "memdpc",
+    "dataset": "BldgDataset",
+    "seq_len": 5,
+    "num_seq": 6,
+    "pred_step": 3,
+    "ds": 3,
+    "mem_size": 512,
+    "batch_size": 8,
+    "lr": 0.001,
+    "wd": 1e-05,
+    "resume": "",
+    "pretrain": "",
+    "epochs": 500,
+    "start_epoch": 0,
+    "gpu": "0,1",
+    "print_freq": 5,
+    "reset_lr": false,
+    "prefix": "tmp",
+    "img_dim": [
+        30,
+        60
+    ],
+    "seed": 0,
+    "workers": 16,
+    "p": 0.8,
+    "data_path": "casestudy.zip"
+}

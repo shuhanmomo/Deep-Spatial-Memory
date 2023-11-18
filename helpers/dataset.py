@@ -211,6 +211,6 @@ class BldgDataset(Dataset):
         for img in imgs:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
-            ax.set_title(f"{bldg} {sequence_type}_route {route}_path {path}")
+            ax.set_title(f"{bldg}_{sequence_type}_route {route}_path {path}")
             plt.imshow(img.reshape(30, 60), cmap="gray", vmin=0, vmax=255)
             plt.show()
