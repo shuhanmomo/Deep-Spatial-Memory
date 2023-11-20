@@ -195,3 +195,48 @@ class RandomCropWithProb:
             return np.array(cropped_images)
         else:
             return imgmap
+
+class RandomSpeedTuning:
+    def __init__(self, min_dup_frames=5, max_dup_frames=10, sequence_length=30, p=0.5):
+        """
+        Initializes the data augmentation class.
+        :param min_dup_frames: Minimum number of frames to duplicate.
+        :param max_dup_frames: Maximum number of frames to duplicate.
+        :param sequence_length: The length of the output sequence.
+        :param p: Probability of applying the augmentation.
+        """
+        self.min_dup_frames = min_dup_frames
+        self.max_dup_frames = max_dup_frames
+        self.sequence_length = sequence_length
+        self.p = p
+
+    def __call__(self, x):
+        """
+        Applies the augmentation to the input sequence with a probability p.
+        :param x: Input tensor of shape (num_frames, C, H, W).
+        :return: Augmented tensor of shape (sequence_length, C, H, W).
+        """
+        if random.random() > self.p:
+            # Do not apply the transformation
+            return x
+
+        num_frames, C, H, W = x.shape
+
+        # Randomly choose the number of frames to duplicate
+        num_dup_frames = random.randint(self.min_dup_frames, self.max_dup_frames)
+
+        # Randomly select frame indices to duplicate and insert them after their original position
+        frames_to_duplicate = sorted(random.sample(range(num_frames), num_dup_frames))
+        extended_sequence = list(x)
+        for idx in reversed(frames_to_duplicate):  # Reverse to maintain correct order when inserting
+            extended_sequence.insert(idx + 1, extended_sequence[idx])
+
+        # Convert list back to tensor
+        extended_sequence = np.stack(extended_sequence)
+
+        # Randomly crop the sequence to the desired length
+        if extended_sequence.shape[0] > self.sequence_length:
+            start_idx = random.randint(0, extended_sequence.shape[0] - self.sequence_length)
+            return extended_sequence[start_idx:start_idx + self.sequence_length]
+        else:
+            return extended_sequence
