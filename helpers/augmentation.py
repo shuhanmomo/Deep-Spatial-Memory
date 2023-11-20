@@ -170,7 +170,6 @@ class RandomCropWithProb:
                 img = imgmap[i, 0, :, :]
                 if self.consistent:
                     if random.random() < self.threshold:
-                        print(w - tw)
                         x1 = random.randint(0, w - tw)
                         y1 = random.randint(0, h - th)
                     else:
