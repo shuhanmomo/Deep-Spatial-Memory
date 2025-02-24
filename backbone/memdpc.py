@@ -6,6 +6,10 @@ from backbone.convrnn import ConvGRU
 import torch.nn.functional as F
 from helpers.utils import calc_topk_accuracy
 
+"""
+most of the codes adapted from original repo https://github.com/TengdaHan/MemDPC
+"""
+
 
 class MemDPC_BD(nn.Module):
     """MemDPC with bi-directional RNN"""

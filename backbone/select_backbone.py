@@ -1,5 +1,9 @@
 from .resnet_2d3d import *
 
+"""
+most of the codes adapted from original repo https://github.com/TengdaHan/MemDPC
+"""
+
 
 def select_resnet(
     network,
