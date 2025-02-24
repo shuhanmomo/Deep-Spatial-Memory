@@ -19,3 +19,4 @@ papervisuals/
 # logging
 log_tmp/
 
+*.jpg
